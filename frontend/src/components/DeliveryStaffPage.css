@@ -1,0 +1,12 @@
+.delivery-staff-table {
+  background-color: white;
+}
+
+.delivery-staff-table th {
+  font-weight: 600;
+}
+
+.delivery-staff-table td {
+  vertical-align: middle;
+}
+

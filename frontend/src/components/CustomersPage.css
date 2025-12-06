@@ -1,0 +1,12 @@
+.customers-table {
+  background-color: white;
+}
+
+.customers-table th {
+  font-weight: 600;
+}
+
+.customers-table td {
+  vertical-align: middle;
+}
+

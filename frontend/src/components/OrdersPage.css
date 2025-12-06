@@ -1,0 +1,18 @@
+.orders-table {
+  margin-top: 20px;
+}
+
+.items-cell {
+  max-width: 200px;
+  word-break: break-word;
+}
+
+@media (max-width: 768px) {
+  .table-responsive {
+    font-size: 0.85rem;
+  }
+
+  .items-cell {
+    max-width: 100px;
+  }
+}
