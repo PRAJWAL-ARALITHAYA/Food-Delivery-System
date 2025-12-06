@@ -129,7 +129,18 @@ Response: [{id, name, cuisine, rating, delivery_time, image_url, created_at}, ..
 
 ```
 GET /restaurants/:id
-Response: {id, name, cuisine, rating, delivery_time, image_url, created_at}
+Response: [
+  {
+    "id": 1,
+    "name": "Pizza Palace",
+    "cuisine": "Italian",
+    "rating": 4.5,
+    "delivery_time": 30,
+    "image_url": "...",
+    "created_at": "..."
+  }
+]
+
 ```
 
 ### Menu Endpoints
@@ -138,14 +149,34 @@ Response: {id, name, cuisine, rating, delivery_time, image_url, created_at}
 
 ```
 GET /restaurants/:restaurant_id/menu
-Response: [{id, restaurant_id, name, description, price, category, image_url, created_at}, ...]
+Response: [
+  {
+    "id": 1,
+    "restaurant_id": 1,
+    "name": "Margherita Pizza",
+    "description": "Classic cheese pizza",
+    "price": 9.99,
+    "category": "Pizza",
+    "image_url": "...",
+    "created_at": "..."
+  }
+]
 ```
 
 #### Get Menu Item by ID
 
 ```
 GET /menu/:id
-Response: {id, restaurant_id, name, description, price, category, image_url, created_at}
+Response: {
+  "id": 1,
+  "restaurant_id": 1,
+  "name": "Margherita Pizza",
+  "description": "Classic cheese pizza",
+  "price": 9.99,
+  "category": "Pizza",
+  "image_url": "...",
+  "created_at": "..."
+}
 ```
 
 ### Orders Endpoints
@@ -154,14 +185,36 @@ Response: {id, restaurant_id, name, description, price, category, image_url, cre
 
 ```
 GET /orders
-Response: [{id, restaurant_id, total_price, status, restaurant_name, items, created_at, updated_at}, ...]
+Response: [
+  {
+    "id": 1,
+    "restaurant_id": 1,
+    "total_price": 25.97,
+    "status": "Pending",
+    "restaurant_name": "Pizza Palace",
+    "items": [ ... ],
+    "created_at": "...",
+    "updated_at": "..."
+  }
+]
+
 ```
 
 #### Get Order by ID
 
 ```
 GET /orders/:id
-Response: {id, restaurant_id, total_price, status, restaurant_name, items: [{...}], created_at, updated_at}
+Response:{
+  "id": 1,
+  "restaurant_id": 1,
+  "total_price": 25.97,
+  "status": "Pending",
+  "restaurant_name": "Pizza Palace",
+  "items": [ ... ],
+  "created_at": "...",
+  "updated_at": "..."
+}
+
 ```
 
 #### Create New Order
@@ -176,22 +229,38 @@ Request Body: {
   ],
   "total_price": 25.97
 }
-Response: {id, restaurant_id, total_price, status, message}
+Response: {
+  "id": 1,
+  "restaurant_id": 1,
+  "total_price": 25.97,
+  "status": "Pending",
+  "message": "Order created successfully"
+}
+
 ```
 
 #### Update Order Status
 
 ```
 PUT /orders/:id
-Request Body: {"status": "Confirmed"}
-Response: {message}
+Request Body:{
+  "status": "Confirmed"
+}
+
+Response: {
+  "message": "Order status updated"
+}
+
 ```
 
 #### Delete Order
 
 ```
 DELETE /orders/:id
-Response: {message}
+Response: {
+  "message": "Order deleted"
+}
+
 ```
 
 #### Health Check
