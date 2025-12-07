@@ -142,3 +142,102 @@ INSERT INTO menu_items (restaurant_id, name, description, price, category, image
 (5, 'Tandoori Chicken', 'Marinated tandoori chicken', 14.99, 'Grill', 'https://via.placeholder.com/150?text=Tandoori'),
 (5, 'Naan Bread', 'Freshly baked naan', 2.99, 'Bread', 'https://via.placeholder.com/150?text=Naan'),
 (5, 'Mango Lassi', 'Refreshing mango lassi', 3.99, 'Beverage', 'https://via.placeholder.com/150?text=Lassi');
+
+-- =====================================================
+-- STORED PROCEDURES AND TRIGGERS
+-- =====================================================
+
+-- Procedure: Assign Delivery Staff to Order
+DROP PROCEDURE IF EXISTS assign_delivery_staff_to_order;
+
+DELIMITER $$
+
+CREATE PROCEDURE assign_delivery_staff_to_order (
+    IN p_order_id INT
+)
+BEGIN
+    DECLARE v_staff_id INT;
+    
+    -- Pick best available delivery staff:
+    -- highest rating, then lowest total_deliveries
+    SELECT id INTO v_staff_id
+    FROM delivery_staff
+    WHERE status = 'Available'
+    ORDER BY rating DESC, total_deliveries ASC
+    LIMIT 1;
+    
+    -- If someone is available, assign them
+    IF v_staff_id IS NOT NULL THEN
+        UPDATE orders
+        SET delivery_staff_id = v_staff_id,
+            status = 'Out for Delivery'
+        WHERE id = p_order_id;
+        
+        UPDATE delivery_staff
+        SET status = 'Busy',
+            total_deliveries = total_deliveries + 1
+        WHERE id = v_staff_id;
+    END IF;
+END$$
+
+DELIMITER ;
+
+-- Trigger: Auto-update Order Total Price when items are added
+DROP TRIGGER IF EXISTS trg_order_items_after_insert;
+
+DELIMITER $$
+
+CREATE TRIGGER trg_order_items_after_insert
+AFTER INSERT ON order_items
+FOR EACH ROW
+BEGIN
+    UPDATE orders
+    SET total_price = (
+        SELECT COALESCE(SUM(quantity * price), 0)
+        FROM order_items
+        WHERE order_id = NEW.order_id
+    )
+    WHERE id = NEW.order_id;
+END$$
+
+DELIMITER ;
+
+-- Trigger: Auto-update Order Total Price when items are updated
+DROP TRIGGER IF EXISTS trg_order_items_after_update;
+
+DELIMITER $$
+
+CREATE TRIGGER trg_order_items_after_update
+AFTER UPDATE ON order_items
+FOR EACH ROW
+BEGIN
+    UPDATE orders
+    SET total_price = (
+        SELECT COALESCE(SUM(quantity * price), 0)
+        FROM order_items
+        WHERE order_id = NEW.order_id
+    )
+    WHERE id = NEW.order_id;
+END$$
+
+DELIMITER ;
+
+-- Trigger: Auto-update Order Total Price when items are deleted
+DROP TRIGGER IF EXISTS trg_order_items_after_delete;
+
+DELIMITER $$
+
+CREATE TRIGGER trg_order_items_after_delete
+AFTER DELETE ON order_items
+FOR EACH ROW
+BEGIN
+    UPDATE orders
+    SET total_price = (
+        SELECT COALESCE(SUM(quantity * price), 0)
+        FROM order_items
+        WHERE order_id = OLD.order_id
+    )
+    WHERE id = OLD.order_id;
+END$$
+
+DELIMITER ;

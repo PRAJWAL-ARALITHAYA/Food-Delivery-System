@@ -17,12 +17,6 @@ function OrdersPage() {
 
   useEffect(() => {
     fetchOrders();
-    // Auto-refresh orders every 5 seconds to show status updates
-    const interval = setInterval(() => {
-      fetchOrders();
-    }, 5000); // 5 seconds
-    
-    return () => clearInterval(interval);
   }, []);
 
   const fetchOrders = async () => {
@@ -194,7 +188,7 @@ function OrdersPage() {
                   </td>
                   <td>{order.restaurant_name}</td>
                   <td className="items-cell">
-                    <small>{order.items || 'No items'}</small>
+                    <small>{order.items || "No items"}</small>
                   </td>
                   <td className="fw-bold text-success">₹{parseFloat(order.total_price || 0).toFixed(2)}</td>
                   <td>
@@ -252,13 +246,13 @@ function OrdersPage() {
               <h6 className="mb-3">
                 Order #{orderDetails.id} - Total: ₹{parseFloat(orderDetails.total_price).toFixed(2)}
               </h6>
-              
+
               {/* Customer and Delivery Info */}
               <div className="row mb-3">
                 <div className="col-md-6">
                   <h6 className="fw-bold">Customer Details:</h6>
                   <p className="mb-1">
-                    <strong>Name:</strong> {orderDetails.customer_name || 'Guest'}
+                    <strong>Name:</strong> {orderDetails.customer_name || "Guest"}
                   </p>
                   {orderDetails.customer_email && (
                     <p className="mb-1">
