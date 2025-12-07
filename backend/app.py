@@ -494,6 +494,7 @@ def create_order():
         
         # Auto-assign available delivery staff
         delivery_staff_id = None
+        initial_status = 'Pending'
         if has_customer_id:
             try:
                 cursor.execute("SHOW TABLES LIKE 'delivery_staff'")
@@ -514,6 +515,8 @@ def create_order():
                             SET status = 'Busy', total_deliveries = total_deliveries + 1
                             WHERE id = %s
                         """, (delivery_staff_id,))
+                        # If we successfully assign a staff at creation, set the order status to Out for Delivery
+                        initial_status = 'Out for Delivery'
             except Exception as e:
                 print(f"Error assigning delivery staff: {e}")
                 pass
@@ -523,8 +526,8 @@ def create_order():
             cursor.execute("""
                 INSERT INTO orders (customer_id, restaurant_id, delivery_staff_id, total_price, status, 
                                   delivery_address, payment_method, created_at)
-                VALUES (%s, %s, %s, %s, 'Pending', %s, %s, %s)
-            """, (customer_id, restaurant_id, delivery_staff_id, calculated_total, 
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (customer_id, restaurant_id, delivery_staff_id, calculated_total, initial_status,
                   delivery_address, payment_method, datetime.now()))
         else:
             # Old schema without customer_id
@@ -613,10 +616,48 @@ def update_order(order_id):
         
         conn = get_db()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("UPDATE orders SET status = %s WHERE id = %s", (status, order_id))
+        # Update order status
+        cursor.execute("UPDATE orders SET status = %s, updated_at = %s WHERE id = %s", (status, datetime.now(), order_id))
+
+        # If the status was changed to Out for Delivery, ensure a delivery staff is assigned
+        if status == 'Out for Delivery':
+            # Check if order already has a delivery_staff
+            cursor.execute("SELECT delivery_staff_id FROM orders WHERE id = %s", (order_id,))
+            row = cursor.fetchone()
+            delivery_staff_id = row.get('delivery_staff_id') if row else None
+
+            if not delivery_staff_id:
+                try:
+                    # Find best available delivery staff
+                    cursor.execute("SHOW TABLES LIKE 'delivery_staff'")
+                    if cursor.fetchone():
+                        cursor.execute("""
+                            SELECT id FROM delivery_staff 
+                            WHERE status = 'Available' 
+                            ORDER BY rating DESC, total_deliveries ASC 
+                            LIMIT 1
+                        """)
+                        staff = cursor.fetchone()
+                        if staff:
+                            ds_id = staff['id']
+                            cursor.execute("UPDATE orders SET delivery_staff_id = %s WHERE id = %s", (ds_id, order_id))
+                            cursor.execute("UPDATE delivery_staff SET status = 'Busy', total_deliveries = total_deliveries + 1 WHERE id = %s", (ds_id,))
+                except Exception as e:
+                    print(f"Error assigning delivery staff on status update: {e}")
+
+        # If status changed to Delivered, mark assigned delivery staff as Available
+        if status == 'Delivered':
+            try:
+                cursor.execute("SELECT delivery_staff_id FROM orders WHERE id = %s", (order_id,))
+                od = cursor.fetchone()
+                if od and od.get('delivery_staff_id'):
+                    cursor.execute("UPDATE delivery_staff SET status = 'Available' WHERE id = %s", (od['delivery_staff_id'],))
+            except Exception as e:
+                print(f"Error releasing delivery staff on delivered: {e}")
+
         conn.commit()
         conn.close()
-        
+
         return jsonify({'message': 'Order updated successfully'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
